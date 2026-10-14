@@ -4,7 +4,7 @@ A Termux add-on that provides controlled access to the Termux private filesystem
 
 ## Status
 
-Specification complete. Implementation pending.
+Initial source skeleton committed. WebDAV handler and full UI still in progress.
 
 ## Goals
 
@@ -25,11 +25,19 @@ Repository and package follow official Termux add-on conventions:
 
 Released under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) only, consistent with official Termux add-ons.
 
-## Specification
+## Current state
 
-The full technical specification is maintained in the conversation history and local artifacts. A copy will be added to this repository as implementation begins.
+- Android project structure (Gradle + Compose)
+- DocumentsProvider exposing `/data/data/com.termux/files/home/Apps`
+- Foreground service with Ktor Netty placeholder and NsdManager advertisement
+- Minimal MainActivity with server start/stop toggle
+- `sharedUserId="com.termux"` declared
 
-## Important Notes
+## Next steps
 
-- Must be signed with the same key as the main Termux app to function as a true add-on.
-- Network server is off by default and intended for trusted local networks only.
+- Complete the streaming WebDAV handler (GET/PUT with Range, PROPFIND, path-traversal protection, etc.)
+- Grant management UI
+- Optional basic auth
+- Full testing against standard WebDAV clients
+
+Must be signed with the same key as the main Termux app to function as a true add-on.
