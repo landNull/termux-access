@@ -15,7 +15,7 @@ pip install webdav-tck
 # or clone https://github.com/abilian/webdav-tck
 ```
 
-Current implementation supports OPTIONS, GET (with Range), PUT, DELETE, and path-traversal protection. PROPFIND is the next method needed for full litmus basic suite.
+Current implementation supports OPTIONS, PROPFIND (Depth 0/1 with basic live properties), GET (with Range), PUT, DELETE, and path-traversal protection. This is enough for litmus basic suite to start. MKCOL, COPY, and MOVE remain for full coverage.
 
 ## Android
 
