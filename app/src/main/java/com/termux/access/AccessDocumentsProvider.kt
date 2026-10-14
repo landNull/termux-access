@@ -9,12 +9,15 @@ import android.provider.DocumentsProvider
 import java.io.File
 import java.io.FileNotFoundException
 
+// DocumentsProvider that exposes only the Termux $HOME/Apps subtree via Storage Access Framework.
+// All paths are resolved relative to appsRoot and rejected if they escape it.
 class AccessDocumentsProvider : DocumentsProvider() {
     private val rootId = "root"
     private val appsRoot = File("/data/data/com.termux/files/home/Apps")
 
     override fun onCreate(): Boolean = true
 
+    // Returns the single root that clients see as "Termux Apps".
     override fun queryRoots(projection: Array<out String>?): Cursor {
         val result = MatrixCursor(projection ?: DEFAULT_ROOT_PROJECTION)
         val row = result.newRow()
@@ -26,6 +29,7 @@ class AccessDocumentsProvider : DocumentsProvider() {
         return result
     }
 
+    // Returns metadata for one document after confirming it stays inside appsRoot.
     override fun queryDocument(documentId: String, projection: Array<out String>?): Cursor {
         val file = resolveSafe(documentId)
         val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_PROJECTION)
@@ -33,6 +37,7 @@ class AccessDocumentsProvider : DocumentsProvider() {
         return result
     }
 
+    // Lists children of a directory document, again after the safe-path check.
     override fun queryChildDocuments(parentDocumentId: String, projection: Array<out String>?, sortOrder: String?): Cursor {
         val parent = resolveSafe(parentDocumentId)
         val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_PROJECTION)
@@ -45,6 +50,7 @@ class AccessDocumentsProvider : DocumentsProvider() {
         return result
     }
 
+    // Opens a file for read or read-write; throws if the path is unsafe or missing.
     override fun openDocument(documentId: String, mode: String, signal: CancellationSignal?): ParcelFileDescriptor {
         val file = resolveSafe(documentId)
         if (!file.exists()) throw FileNotFoundException("Not found: $documentId")
@@ -52,6 +58,8 @@ class AccessDocumentsProvider : DocumentsProvider() {
         return ParcelFileDescriptor.open(file, accessMode)
     }
 
+    // Canonicalizes the candidate and rejects anything that does not start with the Apps root.
+    // This is the sole guard against path traversal for the SAF surface.
     private fun resolveSafe(documentId: String): File {
         if (documentId == rootId) return appsRoot
         val relative = documentId.removePrefix("$rootId/")
@@ -64,6 +72,7 @@ class AccessDocumentsProvider : DocumentsProvider() {
         return canonical
     }
 
+    // Populates one row of a document cursor with the fields clients expect.
     private fun includeFile(result: MatrixCursor, documentId: String, file: File) {
         val row = result.newRow()
         row.add(DocumentsContract.Document.COLUMN_DOCUMENT_ID, documentId)
