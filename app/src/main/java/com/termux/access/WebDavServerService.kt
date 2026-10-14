@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
+import java.io.File
 import java.net.ServerSocket
 import java.util.concurrent.atomic.AtomicReference
 
@@ -22,6 +23,7 @@ class WebDavServerService : Service() {
     private var registrationListener: NsdManager.RegistrationListener? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private val currentPort = AtomicReference(8080)
+    private val appsRoot = File("/data/data/com.termux/files/home/Apps")
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -53,7 +55,7 @@ class WebDavServerService : Service() {
         val port = findFreePort(8080)
         currentPort.set(port)
         server = embeddedServer(Netty, port = port, host = "0.0.0.0") {
-            // Full streaming WebDAV handler (GET/PUT/Range/PROPFIND with path traversal protection) to be completed per specification.
+            installWebDav(appsRoot)
         }.start(wait = false)
         advertise(port)
         val pm = getSystemService(PowerManager::class.java)
