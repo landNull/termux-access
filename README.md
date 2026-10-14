@@ -25,13 +25,25 @@ Repository and package follow official Termux add-on conventions:
 
 Released under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) only, consistent with official Termux add-ons.
 
+## Documentation (Diátaxis + DLitFunc)
+
+Full documentation is organized with the [Diátaxis](https://diataxis.fr/) framework under the **DLitFunc** style (literal + functional synergistic programming and commenting).
+
+See [docs/README.md](docs/README.md) for the map:
+
+- [Tutorials](docs/tutorials/)
+- [How-to guides](docs/how-to/)
+- [Reference](docs/reference/)
+- [Explanation](docs/explanation/)
+- [DLitFunc style guide](docs/dlitfunc.md)
+
 ## Build
 
 Open in Android Studio or build with Gradle. Must be signed with the same key as the main Termux app to function as a true add-on.
 
 ## Testing
 
-See [TESTING.md](TESTING.md) for install and run instructions for the free automated WebDAV compliance script (`scripts/test-webdav.sh`).
+See [TESTING.md](TESTING.md) and [docs/how-to/run-webdav-tests.md](docs/how-to/run-webdav-tests.md) for the free automated WebDAV compliance script.
 
 ## Security
 
@@ -39,3 +51,7 @@ See [TESTING.md](TESTING.md) for install and run instructions for the free autom
 - Intended for trusted local networks only.
 - Path traversal is rejected on both SAF and WebDAV paths.
 - Only the `Apps` subtree is served.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the DLitFunc organization steps.
