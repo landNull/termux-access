@@ -4,7 +4,7 @@ A Termux add-on that provides controlled access to the Termux private filesystem
 
 ## Status
 
-Core source implemented. DocumentsProvider, Ktor Netty service with streaming GET/PUT + Range, NsdManager, and basic UI are present. Full PROPFIND XML, optional auth, and complete grant-management UI remain as polish.
+Core source implemented. DocumentsProvider, Ktor Netty service with streaming GET/PUT + Range, NsdManager, and basic UI are present. PROPFIND (basic) is implemented. Full Class 1 methods, optional auth, and complete grant-management UI remain as polish.
 
 ## Goals
 
@@ -28,6 +28,10 @@ Released under the [GNU General Public License v3.0](https://www.gnu.org/license
 ## Build
 
 Open in Android Studio or build with Gradle. Must be signed with the same key as the main Termux app to function as a true add-on.
+
+## Testing
+
+See [TESTING.md](TESTING.md) for install and run instructions for the free automated WebDAV compliance script (`scripts/test-webdav.sh`).
 
 ## Security
 
