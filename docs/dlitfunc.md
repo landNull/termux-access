@@ -1,6 +1,15 @@
+---
+title: DLitFunc
+tags: [dlitfunc, documentation, style]
+aliases: [DLitFunc style guide]
+---
+
 # DLitFunc
 
-**DLitFunc** = **Di**átaxis + **Lit**eral + **Func**tional synergistic programming and code commenting style.
+**DLitFunc** = **Diátaxis** + **Lit**eral + **Func**tional synergistic programming and code commenting style.
+
+> [!note] Portability
+> This documentation uses standard CommonMark + GFM so it renders correctly in Obsidian, GitHub, VS Code, and other Markdown tools. Wiki-links and Obsidian-only callouts are avoided in the committed files.
 
 ## Principles
 
@@ -48,3 +57,5 @@ GitHub Actions run Vale on every PR.
 6. Run the automation tools before pushing.
 
 This style is the default for all new code and documentation in the termux-access project.
+
+See also the [Diátaxis map](README.md).
