@@ -1,6 +1,14 @@
+---
+title: Termux:Access Documentation
+tags: [documentation, diataxis, dlitfunc]
+---
+
 # Termux:Access Documentation
 
 Documentation follows the [Diátaxis](https://diataxis.fr/) framework and the **DLitFunc** style (literal + functional synergistic programming and commenting).
+
+> [!tip] Obsidian and other Markdown apps
+> All files use standard CommonMark + GFM. They open cleanly in Obsidian, GitHub, VS Code, Typora, and most other Markdown viewers. Optional YAML frontmatter is present for apps that support it.
 
 ## Diátaxis map
 
