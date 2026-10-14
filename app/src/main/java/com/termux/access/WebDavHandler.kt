@@ -87,6 +87,50 @@ fun Application.installWebDav(appsRoot: File) {
             }
         }
     }
+    intercept(io.ktor.server.application.ApplicationCallPipeline.Plugins) {
+        if (call.request.httpMethod.value.equals("PROPFIND", ignoreCase = true)) {
+            val relative = call.parameters.getAll("path")?.joinToString("/") ?: ""
+            val file = try { resolveSafe(appsRoot, relative) } catch (e: Exception) {
+                call.respond(HttpStatusCode.Forbidden)
+                finish()
+                return@intercept
+            }
+            if (!file.exists()) {
+                call.respond(HttpStatusCode.NotFound)
+                finish()
+                return@intercept
+            }
+            val depth = call.request.headers["Depth"] ?: "1"
+            val xml = buildPropfind(file, relative, depth)
+            call.response.headers.append("Content-Type", "application/xml; charset=utf-8")
+            call.respondText(xml, ContentType.Application.Xml, HttpStatusCode.MultiStatus)
+            finish()
+        }
+    }
+}
+
+private fun buildPropfind(file: File, relative: String, depth: String): String {
+    val sb = StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\">\n")
+    fun add(f: File, path: String) {
+        val href = if (path.isEmpty()) "/" else "/$path"
+        val dir = f.isDirectory
+        val lm = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC).format(Instant.ofEpochMilli(f.lastModified()))
+        sb.append("<D:response><D:href>$href</D:href><D:propstat><D:prop>")
+        sb.append("<D:displayname>${f.name.ifEmpty { "Apps" }}</D:displayname>")
+        sb.append("<D:getlastmodified>$lm</D:getlastmodified>")
+        sb.append("<D:resourcetype>${if (dir) "<D:collection/>" else ""}</D:resourcetype>")
+        if (!dir) sb.append("<D:getcontentlength>${f.length()}</D:getcontentlength>")
+        sb.append("</D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>\n")
+    }
+    add(file, relative)
+    if (depth != "0" && file.isDirectory) {
+        file.listFiles()?.forEach { child ->
+            val childPath = if (relative.isEmpty()) child.name else "$relative/${child.name}"
+            add(child, childPath)
+        }
+    }
+    sb.append("</D:multistatus>")
+    return sb.toString()
 }
 
 private fun resolveSafe(root: File, relative: String): File {
