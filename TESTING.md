@@ -22,7 +22,7 @@ The script itself installs **webdav-tck** (free Python port of litmus) the first
 python3 -m pip install --user webdav-tck
 ```
 
-### Run
+### Run (generates a contributor report)
 ```bash
 # Replace with the actual IP and port shown by the Termux:Access service
 ./scripts/test-webdav.sh http://192.168.1.42:8080/
@@ -32,7 +32,7 @@ adb reverse tcp:8080 tcp:8080
 ./scripts/test-webdav.sh http://127.0.0.1:8080/
 ```
 
-The script runs the basic compliance suite (OPTIONS, PROPFIND, GET, PUT, DELETE) and prints pass/fail results.
+The script runs the basic compliance suite and writes a structured Markdown report (`test-report-YYYYMMDD-HHMMSS.md`) containing the raw results plus contributor next steps. Use that report to implement remaining methods (MKCOL, COPY, MOVE, improved PROPFIND) and push the changes as a termux-access contributor.
 
 ### Classic litmus (optional)
 ```bash
@@ -51,4 +51,4 @@ cd litmus && ./autogen.sh && ./configure && make
 - Confirm the server only starts on explicit user action.
 - Confirm path traversal is rejected.
 
-MKCOL, COPY, and MOVE remain for full Class 1 coverage.
+MKCOL, COPY, and MOVE remain for full Class 1 coverage. The generated test report is designed so a contributor can take the results and finish the implementation.
