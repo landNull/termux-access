@@ -1,4 +1,4 @@
-name: Build APK
+name: Build and Test
 
 on:
   push:
@@ -18,12 +18,12 @@ jobs:
           distribution: 'temurin'
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew || true
-      - name: Build with Gradle
+      - name: Build debug APK
         run: |
           if [ -f gradlew ]; then
             ./gradlew assembleDebug --stacktrace
           else
-            echo "No gradlew present; skeleton only"
+            echo "No gradlew; skeleton only"
           fi
       - name: Upload APK
         if: always()
@@ -32,3 +32,18 @@ jobs:
           name: app-debug
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: ignore
+
+  # Free automated protocol test helper (runs when a public or forwarded URL is available).
+  # On a device/emulator use: adb reverse tcp:8080 tcp:8080 && ./scripts/test-webdav.sh http://127.0.0.1:8080/
+  protocol-test:
+    runs-on: ubuntu-latest
+    if: false  # Enable manually or when a test server is reachable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install free webdav-tck
+        run: pip install webdav-tck
+      - name: Run compliance suite
+        run: dav-tck --suites=basic "${{ secrets.WEBDAV_TEST_URL }}"
