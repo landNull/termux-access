@@ -1,0 +1,25 @@
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 60
+  ComplexMethod:
+    active: true
+    threshold: 15
+
+style:
+  ForbiddenComment:
+    active: true
+    comments: ['FIXME:', 'STOPSHIP:']
+  MagicNumber:
+    active: true
+  WildcardImport:
+    active: true
+
+comments:
+  CommentOverPrivateFunction:
+    active: false
+  UndocumentedPublicFunction:
+    active: true
