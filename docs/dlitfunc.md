@@ -23,6 +23,21 @@ fun isSafePath(root: File, candidate: File): Boolean =
     candidate.canonicalPath.startsWith(root.canonicalPath + File.separator)
 ```
 
+## Automation tools
+
+| Tool | Purpose | Command |
+|------|---------|---------|
+| **Vale** + Diátaxis package | Lint documentation into the four kinds | `vale docs` |
+| **ktlint** | Format and enforce Kotlin style (literal naming) | `ktlint --format` |
+| **detekt** | Structural quality, complexity, side-effect hints | `./gradlew detekt` |
+
+Install them with:
+```bash
+./scripts/install-dlitfunc-tools.sh
+```
+
+GitHub Actions run Vale on every PR.
+
 ## Organization steps
 
 1. Place new documentation in the correct Diátaxis folder.
@@ -30,5 +45,6 @@ fun isSafePath(root: File, candidate: File): Boolean =
 3. Add a comment only when the *why* or a hidden contract is not obvious.
 4. Keep side effects at the edges (network, filesystem, Android APIs).
 5. Update the relevant reference or explanation page when behavior changes.
+6. Run the automation tools before pushing.
 
 This style is the default for all new code and documentation in the termux-access project.
