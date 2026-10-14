@@ -10,8 +10,14 @@ This project follows the **DLitFunc** approach: Diátaxis documentation + litera
    - `docs/reference/` — factual lookup
    - `docs/explanation/` — understanding-oriented discussion
 2. **Code style** — prefer literal names and pure functions. Isolate side effects. Comment only the *why* or a non-obvious contract. See [docs/dlitfunc.md](docs/dlitfunc.md).
-3. **Testing** — run `scripts/test-webdav.sh` and attach the generated report when changing WebDAV behavior.
-4. **Push** — open a pull request against `main`. Describe the Diátaxis pages you updated and any remaining gaps.
+3. **Automation** — run the tools before you push:
+   ```bash
+   ./scripts/install-dlitfunc-tools.sh   # once
+   vale docs                              # Diátaxis lint
+   ktlint --format                        # Kotlin style
+   ```
+4. **Testing** — run `scripts/test-webdav.sh` and attach the generated report when changing WebDAV behavior.
+5. **Push** — open a pull request against `main`. Describe the Diátaxis pages you updated and any remaining gaps.
 
 ## Quick start for contributors
 
@@ -22,4 +28,4 @@ cd termux-access
 # Then docs/how-to/run-webdav-tests.md
 ```
 
-All new work should reinforce the DLitFunc style.
+All new work should reinforce the DLitFunc style. The tools above automate the checks.
