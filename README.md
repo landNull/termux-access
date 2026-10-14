@@ -4,7 +4,7 @@ A Termux add-on that provides controlled access to the Termux private filesystem
 
 ## Status
 
-Initial source skeleton committed. WebDAV handler and full UI still in progress.
+Core source implemented. DocumentsProvider, Ktor Netty service with streaming GET/PUT + Range, NsdManager, and basic UI are present. Full PROPFIND XML, optional auth, and complete grant-management UI remain as polish.
 
 ## Goals
 
@@ -25,19 +25,13 @@ Repository and package follow official Termux add-on conventions:
 
 Released under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) only, consistent with official Termux add-ons.
 
-## Current state
+## Build
 
-- Android project structure (Gradle + Compose)
-- DocumentsProvider exposing `/data/data/com.termux/files/home/Apps`
-- Foreground service with Ktor Netty placeholder and NsdManager advertisement
-- Minimal MainActivity with server start/stop toggle
-- `sharedUserId="com.termux"` declared
+Open in Android Studio or build with Gradle. Must be signed with the same key as the main Termux app to function as a true add-on.
 
-## Next steps
+## Security
 
-- Complete the streaming WebDAV handler (GET/PUT with Range, PROPFIND, path-traversal protection, etc.)
-- Grant management UI
-- Optional basic auth
-- Full testing against standard WebDAV clients
-
-Must be signed with the same key as the main Termux app to function as a true add-on.
+- Network server starts only on explicit user action and is off by default.
+- Intended for trusted local networks only.
+- Path traversal is rejected on both SAF and WebDAV paths.
+- Only the `Apps` subtree is served.
