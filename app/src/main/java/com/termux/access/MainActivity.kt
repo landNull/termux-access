@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import java.io.File
 
+// Minimal UI that starts and stops the WebDAV foreground service.
+// The server remains off until the user explicitly taps the button.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +35,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Renders the toggle and a short status line about the Apps folder.
 @Composable
 fun MainScreen(onStartServer: () -> Unit, onStopServer: () -> Unit) {
     var running by remember { mutableStateOf(false) }
