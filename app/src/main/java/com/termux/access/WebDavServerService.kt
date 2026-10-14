@@ -17,6 +17,8 @@ import java.io.File
 import java.net.ServerSocket
 import java.util.concurrent.atomic.AtomicReference
 
+// Foreground service that runs the Ktor Netty WebDAV server and advertises it via NsdManager.
+// The server binds only to the Apps subtree and acquires a partial wake lock while running.
 class WebDavServerService : Service() {
     private var server: NettyApplicationEngine? = null
     private var nsdManager: NsdManager? = null
@@ -27,6 +29,7 @@ class WebDavServerService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    // Starts the foreground service and the server, or stops everything on ACTION_STOP.
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             stopSelf()
@@ -37,6 +40,7 @@ class WebDavServerService : Service() {
         return START_STICKY
     }
 
+    // Creates the low-importance notification channel and the persistent notification with a Stop action.
     private fun startForegroundWithNotification() {
         val channelId = "termux_access_server"
         val nm = getSystemService(NotificationManager::class.java)
@@ -51,6 +55,7 @@ class WebDavServerService : Service() {
         startForeground(1, notification)
     }
 
+    // Binds Netty to a free port, installs the WebDAV routes, registers mDNS, and takes a wake lock.
     private fun startServer() {
         val port = findFreePort(8080)
         currentPort.set(port)
@@ -62,6 +67,7 @@ class WebDavServerService : Service() {
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TermuxAccess::WebDav").apply { acquire(10 * 60 * 1000L) }
     }
 
+    // Registers the service under the _termuxaccess._tcp type so LAN clients can discover it.
     private fun advertise(port: Int) {
         nsdManager = getSystemService(NsdManager::class.java)
         val serviceInfo = NsdServiceInfo().apply {
@@ -78,6 +84,7 @@ class WebDavServerService : Service() {
         nsdManager?.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
     }
 
+    // Returns the first free TCP port in [start, start+20). Falls back to start if none are free.
     private fun findFreePort(start: Int): Int {
         for (p in start until start + 20) {
             try { ServerSocket(p).use { return p } } catch (_: Exception) {}
