@@ -13,14 +13,23 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.put
 import io.ktor.server.routing.delete
+import io.ktor.server.routing.options
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 fun Application.installWebDav(appsRoot: File) {
     routing {
         route("/{path...}") {
+            options {
+                call.response.headers.append("DAV", "1")
+                call.response.headers.append("Allow", "OPTIONS, GET, HEAD, PUT, DELETE, MKCOL, PROPFIND, COPY, MOVE")
+                call.respond(HttpStatusCode.OK)
+            }
             get {
                 val file = resolveSafe(appsRoot, call.parameters.getAll("path")?.joinToString("/") ?: "")
                 if (!file.exists()) {
@@ -28,7 +37,7 @@ fun Application.installWebDav(appsRoot: File) {
                     return@get
                 }
                 if (file.isDirectory) {
-                    call.respondText("Directory listing not implemented in GET; use PROPFIND", ContentType.Text.Plain)
+                    call.respondText("Use PROPFIND for directories", ContentType.Text.Plain)
                     return@get
                 }
                 val rangeHeader = call.request.headers["Range"]
