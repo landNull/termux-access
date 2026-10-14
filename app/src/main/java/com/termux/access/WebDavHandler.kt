@@ -22,14 +22,18 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
+// Installs the WebDAV routes and the PROPFIND interceptor on the Ktor application.
+// Every path is passed through resolveSafe before any filesystem access.
 fun Application.installWebDav(appsRoot: File) {
     routing {
         route("/{path...}") {
+            // Advertises the methods this server currently claims to support.
             options {
                 call.response.headers.append("DAV", "1")
                 call.response.headers.append("Allow", "OPTIONS, GET, HEAD, PUT, DELETE, MKCOL, PROPFIND, COPY, MOVE")
                 call.respond(HttpStatusCode.OK)
             }
+            // Streams a file. Honors a single bytes= range and returns 206 when present.
             get {
                 val file = resolveSafe(appsRoot, call.parameters.getAll("path")?.joinToString("/") ?: "")
                 if (!file.exists()) {
@@ -73,6 +77,7 @@ fun Application.installWebDav(appsRoot: File) {
                     call.response.headers.append("Accept-Ranges", "bytes")
                 }
             }
+            // Creates or overwrites a file by streaming the request body.
             put {
                 val file = resolveSafe(appsRoot, call.parameters.getAll("path")?.joinToString("/") ?: "")
                 file.parentFile?.mkdirs()
@@ -81,12 +86,14 @@ fun Application.installWebDav(appsRoot: File) {
                 }
                 call.respond(HttpStatusCode.Created)
             }
+            // Deletes the file or directory tree if it exists.
             delete {
                 val file = resolveSafe(appsRoot, call.parameters.getAll("path")?.joinToString("/") ?: "")
                 if (file.deleteRecursively()) call.respond(HttpStatusCode.NoContent) else call.respond(HttpStatusCode.NotFound)
             }
         }
     }
+    // PROPFIND is handled outside the normal route table so Depth and Multi-Status can be returned.
     intercept(io.ktor.server.application.ApplicationCallPipeline.Plugins) {
         if (call.request.httpMethod.value.equals("PROPFIND", ignoreCase = true)) {
             val relative = call.parameters.getAll("path")?.joinToString("/") ?: ""
@@ -109,6 +116,7 @@ fun Application.installWebDav(appsRoot: File) {
     }
 }
 
+// Builds a minimal 207 Multi-Status XML body for Depth 0 or 1.
 private fun buildPropfind(file: File, relative: String, depth: String): String {
     val sb = StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<D:multistatus xmlns:D=\"DAV:\">\n")
     fun add(f: File, path: String) {
@@ -133,6 +141,7 @@ private fun buildPropfind(file: File, relative: String, depth: String): String {
     return sb.toString()
 }
 
+// Canonicalizes the path and rejects anything that escapes the Apps root.
 private fun resolveSafe(root: File, relative: String): File {
     val candidate = File(root, relative)
     val canonical = candidate.canonicalFile
