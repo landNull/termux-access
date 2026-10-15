@@ -13,7 +13,7 @@ termux-setup-storage || true
 
 echo "Updating packages..."
 pkg update -y
-pkg install -y git curl wget unzip openjdk-17
+pkg install -y git curl wget unzip openjdk-17 openjdk-21 || pkg install -y git curl wget unzip openjdk-17
 
 STUDIO_DIR="$HOME/termux-studio"
 if [ ! -d "$STUDIO_DIR" ]; then
@@ -31,8 +31,23 @@ if [ -f "$HOME/.bashrc" ]; then
   source "$HOME/.bashrc" || true
 fi
 
+# Robust JAVA_HOME for Termux (prefers java-21, falls back to java-17 or whatever is present)
+if [ -z "${JAVA_HOME:-}" ] || [ ! -d "${JAVA_HOME}" ]; then
+  if [ -d "$PREFIX/lib/jvm/java-21-openjdk" ]; then
+    export JAVA_HOME="$PREFIX/lib/jvm/java-21-openjdk"
+  elif [ -d "$PREFIX/lib/jvm/java-17-openjdk" ]; then
+    export JAVA_HOME="$PREFIX/lib/jvm/java-17-openjdk"
+  else
+    # Last resort: derive from `java` binary
+    JAVA_BIN=$(command -v java || true)
+    if [ -n "$JAVA_BIN" ]; then
+      export JAVA_HOME=$(dirname "$(dirname "$(readlink -f "$JAVA_BIN")")")
+    fi
+  fi
+fi
+echo "Using JAVA_HOME=$JAVA_HOME"
+
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/android-sdk}"
-export JAVA_HOME="${JAVA_HOME:-$(dirname $(dirname $(readlink -f $(which java) 2>/dev/null || echo /usr)))}"
 mkdir -p "$HOME/.gradle"
 if ! grep -q "aapt2FromMavenOverride" "$HOME/.gradle/gradle.properties" 2>/dev/null; then
   echo "android.aapt2FromMavenOverride=${PREFIX}/bin/aapt2" >> "$HOME/.gradle/gradle.properties" || true
@@ -45,7 +60,10 @@ if [ ! -d "$REPO_DIR" ]; then
 else
   echo "Updating existing termux-access clone..."
   cd "$REPO_DIR"
-  git pull --ff-only || true
+  # Stash any local changes so pull can succeed, then re-apply
+  git stash push -u -m "auto-stash before pull" || true
+  git pull --ff-only || git pull --rebase || true
+  git stash pop || true
 fi
 
 cd "$REPO_DIR"
@@ -62,7 +80,7 @@ echo ""
 echo "=== Starting debug build (first run may take several minutes) ==="
 if [ -x "./gradlew" ]; then
   ./gradlew assembleDebug --stacktrace --no-daemon || {
-    echo "gradlew assembleDebug failed. Check ANDROID_HOME and SDK licenses."
+    echo "gradlew assembleDebug failed. Check JAVA_HOME and ANDROID_HOME."
     exit 1
   }
 elif command -v gradle >/dev/null 2>&1; then
