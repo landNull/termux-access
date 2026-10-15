@@ -1,0 +1,89 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# DLitFunc: Sets up an on-device Android build environment in Termux (via termux-android-studio),
+# clones or updates termux-access, generates a Gradle wrapper if missing, runs assembleDebug,
+# and copies the resulting APK to $HOME.
+# Side effects: large network downloads (SDK, Gradle caches), package installs, git clone/pull, Gradle build.
+# Inputs: free storage (several GB), network. No root required.
+# Outputs: termux-access-debug.apk in $HOME on success; exits non-zero on failure.
+set -euo pipefail
+
+echo "=== On-device Termux:Access build automation ==="
+
+termux-setup-storage || true
+
+echo "Updating packages..."
+pkg update -y
+pkg install -y git curl wget unzip openjdk-17
+
+STUDIO_DIR="$HOME/termux-studio"
+if [ ! -d "$STUDIO_DIR" ]; then
+  echo "Cloning termux-android-studio..."
+  git clone https://github.com/poordevcode/termux-android-studio.git "$STUDIO_DIR"
+fi
+
+echo "Running termux-android-studio installer (downloads SDK; may take a while)..."
+bash "$STUDIO_DIR/install.sh" -y || {
+  echo "Installer reported an issue. Continuing — re-run if needed."
+}
+
+if [ -f "$HOME/.bashrc" ]; then
+  # shellcheck disable=SC1090
+  source "$HOME/.bashrc" || true
+fi
+
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/android-sdk}"
+export JAVA_HOME="${JAVA_HOME:-$(dirname $(dirname $(readlink -f $(which java) 2>/dev/null || echo /usr)))}"
+mkdir -p "$HOME/.gradle"
+if ! grep -q "aapt2FromMavenOverride" "$HOME/.gradle/gradle.properties" 2>/dev/null; then
+  echo "android.aapt2FromMavenOverride=${PREFIX}/bin/aapt2" >> "$HOME/.gradle/gradle.properties" || true
+fi
+
+REPO_DIR="$HOME/termux-access"
+if [ ! -d "$REPO_DIR" ]; then
+  echo "Cloning termux-access..."
+  git clone https://github.com/landNull/termux-access.git "$REPO_DIR"
+else
+  echo "Updating existing termux-access clone..."
+  cd "$REPO_DIR"
+  git pull --ff-only || true
+fi
+
+cd "$REPO_DIR"
+
+if [ ! -f "./gradlew" ]; then
+  echo "No gradlew found. Generating wrapper..."
+  if command -v gradle >/dev/null 2>&1; then
+    gradle wrapper --gradle-version 8.5 || gradle wrapper || true
+    chmod +x gradlew 2>/dev/null || true
+  fi
+fi
+
+echo ""
+echo "=== Starting debug build (first run may take several minutes) ==="
+if [ -x "./gradlew" ]; then
+  ./gradlew assembleDebug --stacktrace --no-daemon || {
+    echo "gradlew assembleDebug failed. Check ANDROID_HOME and SDK licenses."
+    exit 1
+  }
+elif command -v gradle >/dev/null 2>&1; then
+  gradle assembleDebug --stacktrace --no-daemon || {
+    echo "gradle assembleDebug failed."
+    exit 1
+  }
+else
+  echo "Neither ./gradlew nor gradle is available. Re-run after installer finishes."
+  exit 1
+fi
+
+APK=$(find app/build/outputs/apk -name "*.apk" -type f 2>/dev/null | head -n 1 || true)
+if [ -n "$APK" ] && [ -f "$APK" ]; then
+  echo ""
+  echo "=== BUILD SUCCEEDED ==="
+  echo "APK: $APK"
+  cp -v "$APK" "$HOME/termux-access-debug.apk" || true
+  echo "Copied to: $HOME/termux-access-debug.apk"
+  echo "Install with: adb install -r \"$APK\" or termux-open \"$APK\""
+else
+  echo "Build finished but no APK found under app/build/outputs/apk."
+  exit 1
+fi
