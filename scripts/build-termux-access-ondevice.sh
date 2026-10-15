@@ -5,6 +5,7 @@
 # Side effects: large network downloads (SDK, Gradle caches), package installs, git clone/pull, Gradle build.
 # Inputs: free storage (several GB), network. No root required.
 # Outputs: termux-access-debug.apk in $HOME on success; exits non-zero on failure.
+#           Full build log written to $HOME/termux-access-build.log.
 set -euo pipefail
 
 echo "=== On-device Termux:Access build automation ==="
@@ -76,16 +77,20 @@ if [ ! -f "./gradlew" ]; then
   fi
 fi
 
+LOG="$HOME/termux-access-build.log"
 echo ""
 echo "=== Starting debug build (first run may take several minutes) ==="
+echo "Full log: $LOG"
+
+# Run the build and tee all output to the log file
 if [ -x "./gradlew" ]; then
-  ./gradlew assembleDebug --stacktrace --no-daemon || {
-    echo "gradlew assembleDebug failed. Check JAVA_HOME and ANDROID_HOME."
+  ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee "$LOG" || {
+    echo "gradlew assembleDebug failed. See $LOG"
     exit 1
   }
 elif command -v gradle >/dev/null 2>&1; then
-  gradle assembleDebug --stacktrace --no-daemon || {
-    echo "gradle assembleDebug failed."
+  gradle assembleDebug --stacktrace --no-daemon 2>&1 | tee "$LOG" || {
+    echo "gradle assembleDebug failed. See $LOG"
     exit 1
   }
 else
@@ -101,7 +106,8 @@ if [ -n "$APK" ] && [ -f "$APK" ]; then
   cp -v "$APK" "$HOME/termux-access-debug.apk" || true
   echo "Copied to: $HOME/termux-access-debug.apk"
   echo "Install with: adb install -r \"$APK\" or termux-open \"$APK\""
+  echo "Build log: $LOG"
 else
-  echo "Build finished but no APK found under app/build/outputs/apk."
+  echo "Build finished but no APK found under app/build/outputs/apk. See $LOG"
   exit 1
 fi
