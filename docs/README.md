@@ -26,6 +26,8 @@ Literal + functional synergistic style. See [dlitfunc.md](dlitfunc.md) for the p
 ## Start here
 
 - New to the project → [tutorials/getting-started.md](tutorials/getting-started.md)
+- Install and test via ADB from a phone → [how-to/install-and-test-via-adb.md](how-to/install-and-test-via-adb.md)
+- Build the APK on-device in Termux → [how-to/build-on-device.md](how-to/build-on-device.md)
 - Want to run tests → [how-to/run-webdav-tests.md](how-to/run-webdav-tests.md)
 - Need the HTTP contract → [reference/webdav-endpoints.md](reference/webdav-endpoints.md)
 - Curious about design choices → [explanation/why-termux-addon.md](explanation/why-termux-addon.md)
