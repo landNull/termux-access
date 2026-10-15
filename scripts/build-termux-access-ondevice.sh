@@ -94,10 +94,11 @@ fi
 
 cd "$REPO_DIR"
 
-if [ ! -f "./gradlew" ]; then
-  echo "No gradlew found. Generating wrapper..."
+# Ensure wrapper uses Gradle 8.9+ (required by AGP 8.7)
+if [ ! -f "./gradlew" ] || ! grep -q "gradle-8.9" gradle/wrapper/gradle-wrapper.properties 2>/dev/null; then
+  echo "Generating / updating Gradle wrapper to 8.9..."
   if command -v gradle >/dev/null 2>&1; then
-    gradle wrapper --gradle-version 8.5 || gradle wrapper || true
+    gradle wrapper --gradle-version 8.9 || true
     chmod +x gradlew 2>/dev/null || true
   fi
 fi
