@@ -5,7 +5,7 @@
 # Side effects: large network downloads (SDK, Gradle caches), package installs, git clone/pull, Gradle build.
 # Inputs: free storage (several GB), network. No root required.
 # Outputs: termux-access-debug.apk in $HOME on success; exits non-zero on failure.
-#           Full build log written to $HOME/termux-access-build.log.
+#           Full build log written to $HOME/termux-access.<YYYYMMDD-HHMMSS>.log.
 set -euo pipefail
 
 echo "=== On-device Termux:Access build automation ==="
@@ -77,12 +77,14 @@ if [ ! -f "./gradlew" ]; then
   fi
 fi
 
-LOG="$HOME/termux-access-build.log"
+# Timestamped log so each run is preserved
+STAMP=$(date +%Y%m%d-%H%M%S)
+LOG="$HOME/termux-access.${STAMP}.log"
 echo ""
 echo "=== Starting debug build (first run may take several minutes) ==="
 echo "Full log: $LOG"
 
-# Run the build and tee all output to the log file
+# Run the build and tee all output to the timestamped log file
 if [ -x "./gradlew" ]; then
   ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee "$LOG" || {
     echo "gradlew assembleDebug failed. See $LOG"
