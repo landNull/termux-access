@@ -2,7 +2,7 @@
 # DLitFunc: Sets up an on-device Android build environment in Termux (via termux-android-studio),
 # clones or updates termux-access, generates a Gradle wrapper if missing, runs assembleDebug,
 # and copies the resulting APK to $HOME.
-# Side effects: large network downloads (SDK, Gradle caches), package installs, git clone/pull, Gradle build.
+# Side effects: large network downloads (SDK, Gradle caches) only when missing, package installs, git clone/pull, Gradle build.
 # Inputs: free storage (several GB), network. No root required.
 # Outputs: termux-access-debug.apk in $HOME on success; exits non-zero on failure.
 #           Full build log written to $HOME/termux-access.<YYYYMMDD-HHMMSS>.log.
@@ -12,18 +12,43 @@ echo "=== On-device Termux:Access build automation ==="
 
 termux-setup-storage || true
 
-echo "Updating packages..."
+echo "Updating package lists..."
 pkg update -y
-pkg install -y git curl wget unzip openjdk-17 openjdk-21 || pkg install -y git curl wget unzip openjdk-17
+
+# Install Termux-packaged tools only if missing (these stay in the local pkg cache after first install)
+REQUIRED_PKGS=(git curl wget unzip openjdk-17 openjdk-21 gradle aapt2 android-tools)
+MISSING=()
+for p in "${REQUIRED_PKGS[@]}"; do
+  if ! dpkg -s "$p" >/dev/null 2>&1; then
+    MISSING+=("$p")
+  fi
+done
+if [ ${#MISSING[@]} -gt 0 ]; then
+  echo "Installing missing packages: ${MISSING[*]}"
+  pkg install -y "${MISSING[@]}" || pkg install -y openjdk-17 gradle aapt2 git curl wget unzip android-tools
+else
+  echo "All required Termux packages already installed."
+fi
 
 STUDIO_DIR="$HOME/termux-studio"
 if [ ! -d "$STUDIO_DIR" ]; then
   echo "Cloning termux-android-studio..."
   git clone https://github.com/poordevcode/termux-android-studio.git "$STUDIO_DIR"
+else
+  echo "termux-android-studio already present."
 fi
 
-echo "Running termux-android-studio installer (downloads SDK; may take a while)..."
-bash "$STUDIO_DIR/install.sh" -y || {
+# Only run the full installer if the SDK is missing; otherwise pass --no-sdk
+SDK_FLAG=""
+if [ -d "$HOME/android-sdk" ] && [ -x "$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager" ]; then
+  echo "Android SDK already present; skipping SDK download."
+  SDK_FLAG="--no-sdk"
+else
+  echo "Android SDK not found; running full installer (downloads SDK)."
+fi
+
+echo "Running termux-android-studio installer..."
+bash "$STUDIO_DIR/install.sh" -y $SDK_FLAG || {
   echo "Installer reported an issue. Continuing — re-run if needed."
 }
 
